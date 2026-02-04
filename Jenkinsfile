@@ -15,9 +15,22 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install System Dependencies') {
             steps {
-                echo "Installing Python + Robot + Selenium..."
+                echo "Installing Chromium + ChromeDriver (if missing)..."
+
+                sh '''
+                if ! command -v chromium >/dev/null 2>&1; then
+                    apt-get update
+                    apt-get install -y chromium-browser chromium-chromedriver
+                fi
+                '''
+            }
+        }
+
+        stage('Install Python Dependencies') {
+            steps {
+                echo "Installing Robot Framework + Selenium..."
 
                 sh '''
                 python3 -m pip install --upgrade pip
@@ -30,23 +43,25 @@ pipeline {
 
         stage('Verify Environment') {
             steps {
-                echo "Checking installed tools..."
+                echo "Verifying installed tools..."
 
-                sh 'python3 --version'
-                sh 'robot --version'
-                sh 'chromium --version || google-chrome --version'
-                sh 'chromedriver --version || echo "Chromedriver missing"'
+                sh '''
+                python3 --version
+                robot --version
+                chromium --version || google-chrome --version
+                chromedriver --version
+                '''
             }
         }
 
         stage('Run Robot Tests') {
             steps {
-                echo "Running Robot Framework tests..."
+                echo "Running Robot tests..."
 
                 sh """
                 robot \
                     --outputdir ${RESULTS_DIR} \
-                    tests/
+                    tests/Lab8.robot
                 """
             }
         }
