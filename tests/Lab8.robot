@@ -10,9 +10,3 @@ Open Browser To Login Page
     
     Create Webdriver    Chrome    options=${chrome_options}
     Go To    https://computing.kku.ac.th
-
-*** Test Cases ***
-Open KKU Computing Website
-    Open Browser To Login Page
-    Sleep    3s
-    Close Browser

@@ -6,42 +6,31 @@ pipeline {
     }
 
     stages {
-
         stage('Cleanup') {
             steps {
-                echo "Cleaning old results..."
+                echo "Cleaning up old results..."
                 sh "rm -rf ${RESULTS_DIR}"
                 sh "mkdir -p ${RESULTS_DIR}"
             }
         }
 
-        stage('Verify Environment') {
+        stage('Build Check') {
             steps {
-                echo "Checking installed tools..."
-
+                echo "Verifying Environment..."
                 sh 'python3 --version'
                 sh 'robot --version'
-                sh 'chromium --version || google-chrome --version'
-                sh 'chromedriver --version'
-
-                // Debug workspace structure
-                sh '''
-                echo "Workspace:"
-                pwd
-                ls -R
-                '''
+                sh 'chromium --version'
             }
         }
 
         stage('Run Robot Tests') {
             steps {
-                echo "Running Robot Framework tests..."
-
                 sh """
-                robot \
-                    --outputdir ${RESULTS_DIR} \
-                    --loglevel TRACE \
-                    tests/
+                robot --outputdir ${RESULTS_DIR} \
+                      --variable BROWSER:headlesschrome \
+                      --variable REMOTE_URL:http://localhost:4444/wd/hub \
+                      --settag docker_run \
+                      tests/
                 """
             }
         }
@@ -49,8 +38,7 @@ pipeline {
 
     post {
         always {
-            echo "Publishing Robot results..."
-
+            // Requires "Robot Framework Plugin" installed in Jenkins
             step([$class: 'RobotPublisher',
                 outputPath: "${RESULTS_DIR}",
                 outputFileName: 'output.xml',
@@ -60,7 +48,7 @@ pipeline {
                 passThreshold: 100.0,
                 unstableThreshold: 80.0
             ])
-
+            
             archiveArtifacts artifacts: "${RESULTS_DIR}/*.*", allowEmptyArchive: true
         }
     }
