@@ -7,24 +7,34 @@ pipeline {
 
     stages {
 
-        stage('Checkout Source') {
+        stage('Checkout') {
             steps {
-                echo "Cloning repository..."
                 checkout scm
             }
         }
 
-        stage('Install System Dependencies') {
+        stage('Install Python + Selenium') {
             steps {
-                echo "Installing Firefox + Geckodriver..."
-
                 sh '''
-                apt-get update
+                echo "Installing Python dependencies..."
 
-                # Install Firefox
+                python3 -m pip install --upgrade pip
+
+                pip3 install robotframework
+                pip3 install robotframework-seleniumlibrary
+                pip3 install selenium
+                '''
+            }
+        }
+
+        stage('Install Firefox + Geckodriver') {
+            steps {
+                sh '''
+                echo "Installing Firefox and Geckodriver..."
+
+                apt-get update
                 apt-get install -y firefox-esr wget tar
 
-                # Install Geckodriver
                 GECKO_VERSION=0.34.0
                 wget https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz
                 tar -xvzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
@@ -34,28 +44,15 @@ pipeline {
             }
         }
 
-        stage('Install Python Dependencies') {
-            steps {
-                echo "Installing Robot Framework + Selenium..."
-
-                sh '''
-                python3 -m pip install --upgrade pip
-                pip3 install robotframework
-                pip3 install robotframework-seleniumlibrary
-                pip3 install selenium
-                '''
-            }
-        }
-
         stage('Verify Environment') {
             steps {
                 sh '''
-                echo "Verifying installed tools..."
+                echo "Verifying installations..."
 
+                python3 --version
+                robot --version
                 firefox --version
                 geckodriver --version
-                robot --version
-                python3 --version
                 '''
             }
         }
@@ -72,8 +69,6 @@ pipeline {
 
     post {
         always {
-            echo "Publishing Robot results..."
-
             step([$class: 'RobotPublisher',
                 outputPath: "${RESULTS_DIR}",
                 outputFileName: 'output.xml',
