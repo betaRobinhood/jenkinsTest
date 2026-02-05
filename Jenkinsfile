@@ -7,45 +7,20 @@ pipeline {
 
     stages {
 
-        stage('Install System Dependencies') {
+        stage('Checkout Source') {
             steps {
-                echo "Installing Firefox + Geckodriver..."
-
-                sh '''
-                apt-get update
-
-                # Install Firefox
-                apt-get install -y firefox-esr
-
-                # Install geckodriver
-                GECKO_VERSION=0.34.0
-                wget https://github.com/mozilla/geckodriver/releases/download/v$GECKO_VERSION/geckodriver-v$GECKO_VERSION-linux64.tar.gz
-                tar -xvzf geckodriver-v$GECKO_VERSION-linux64.tar.gz
-                mv geckodriver /usr/local/bin/
-                chmod +x /usr/local/bin/geckodriver
-                '''
-            }
-        }
-
-        stage('Install Python Dependencies') {
-            steps {
-                echo "Installing Robot + Selenium..."
-
-                sh '''
-                python3 -m pip install --upgrade pip
-                pip3 install robotframework
-                pip3 install robotframework-seleniumlibrary
-                pip3 install selenium
-                '''
+                checkout scm
             }
         }
 
         stage('Verify Environment') {
             steps {
                 sh '''
+                echo "Checking installed tools..."
+                python3 --version
+                robot --version
                 firefox --version
                 geckodriver --version
-                robot --version
                 '''
             }
         }
@@ -53,6 +28,7 @@ pipeline {
         stage('Run Robot Tests') {
             steps {
                 sh """
+                mkdir -p ${RESULTS_DIR}
                 robot --outputdir ${RESULTS_DIR} tests/Lab8.robot
                 """
             }
