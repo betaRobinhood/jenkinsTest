@@ -7,7 +7,7 @@ ${BROWSER}    Firefox
 
 *** Test Cases ***
 Open KKU Computing Website (Headless Firefox)
-    [Documentation]    Open KKU Computing website using headless Firefox
+    [Documentation]    Open website using headless Firefox
 
     ${options}=    Evaluate    __import__('selenium.webdriver').webdriver.FirefoxOptions()
     Call Method    ${options}    add_argument    -headless
